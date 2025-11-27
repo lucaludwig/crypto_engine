@@ -114,13 +114,13 @@ function createCoinCard(coin, rank, isWeb3 = false) {
         ? `<span class="wash-badge">⚠️ Wash: ${coin.wash_trading_confidence}%</span>`
         : `<span class="clean-badge">✓ Clean</span>`;
 
-    const contractSection = isWeb3 && coin.contract_address ? `
-        <div class="contract-info">
-            <strong>📍 Contract Address (${coin.platform}):</strong>
-            <div class="contract-address">${coin.contract_address}</div>
-            <small>→ Search this on Binance Web3 Wallet</small>
+    const hasContractInfo = isWeb3 && coin.contract_address;
+    const contractSection = `
+        <div class="contract-info ${hasContractInfo ? '' : 'placeholder'}">
+            <div class="contract-label">Contract ${hasContractInfo ? `(${coin.platform})` : ''}</div>
+            <div class="contract-address">${hasContractInfo ? coin.contract_address : '—'}</div>
         </div>
-    ` : '';
+    `;
 
     card.innerHTML = `
         <div class="coin-header">
