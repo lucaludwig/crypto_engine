@@ -6,8 +6,8 @@ import sys
 from urllib.parse import parse_qs, urlparse
 
 
-from .cmc_client import CoinMarketCapClient
-from .enhanced_analyzer import EnhancedCryptoAnalyzer
+from cmc_client import CoinMarketCapClient
+from enhanced_analyzer import EnhancedCryptoAnalyzer
 
 
 class handler(BaseHTTPRequestHandler):
