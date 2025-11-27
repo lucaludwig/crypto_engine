@@ -3,8 +3,14 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import sys
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+
+# Ensure local imports work in the Vercel runtime
+CURRENT_DIR = Path(__file__).resolve().parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
 
 from cmc_client import CoinMarketCapClient
 from enhanced_analyzer import EnhancedCryptoAnalyzer
