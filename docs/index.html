@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CADVI Pro - Crypto Market Advisor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🚀 CADVI Pro</h1>
+            <p class="subtitle">Professional Crypto Market Advisor</p>
+            <p class="disclaimer">⚠️ Not financial advice | High risk | DYOR | Educational purposes only</p>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <button id="analyzeBtn" class="btn-analyze">
+                <span class="btn-icon">🔍</span>
+                Analyze Market Now
+            </button>
+            <div class="settings">
+                <label>
+                    Coins to analyze:
+                    <select id="limitSelect">
+                        <option value="500">500</option>
+                        <option value="1000" selected>1000</option>
+                        <option value="2000">2000</option>
+                    </select>
+                </label>
+                <label>
+                    Per category:
+                    <select id="topSelect">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Analyzing market data with RSI, MACD, Bollinger Bands...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="error" class="error hidden"></div>
+
+        <!-- Stats -->
+        <div id="stats" class="stats hidden">
+            <div class="stat-item">
+                <span class="stat-label">Total Recommendations</span>
+                <span class="stat-value" id="totalRecs">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Coins Analyzed</span>
+                <span class="stat-value" id="totalAnalyzed">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Filtered (Suspicious)</span>
+                <span class="stat-value" id="totalFiltered">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Last Updated</span>
+                <span class="stat-value" id="lastUpdate">-</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="results hidden">
+            <!-- Binance Spot -->
+            <section class="category">
+                <h2 class="category-title">🏦 Binance Spot (<span id="spotCount">0</span>)</h2>
+                <div id="spotList" class="coin-list"></div>
+            </section>
+
+            <!-- Binance Futures -->
+            <section class="category">
+                <h2 class="category-title">📈 Binance Futures (<span id="futuresCount">0</span>)</h2>
+                <div id="futuresList" class="coin-list"></div>
+            </section>
+
+            <!-- Binance Web3 -->
+            <section class="category">
+                <h2 class="category-title">💼 Binance Web3 Wallet (<span id="web3Count">0</span>)</h2>
+                <div id="web3List" class="coin-list"></div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Powered by professional analysis: RSI, MACD, Bollinger Bands, Wash Trading Detection, BTC Correlation</p>
+            <p>Data from <a href="https://coinmarketcap.com" target="_blank">CoinMarketCap</a></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
