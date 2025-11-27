@@ -1,6 +1,6 @@
 // Configuration
-const API_URL = 'https://your-api-url.com/api/analyze'; // UPDATE THIS AFTER DEPLOYMENT
-// For local testing: const API_URL = 'http://localhost:5000/api/analyze';
+const API_URL = '/api/analyze'; // Vercel serverless function
+// No need to update - works automatically!
 
 // Elements
 const analyzeBtn = document.getElementById('analyzeBtn');
