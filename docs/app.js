@@ -8,7 +8,6 @@ const limitSelect = document.getElementById('limitSelect');
 const topSelect = document.getElementById('topSelect');
 const loading = document.getElementById('loading');
 const error = document.getElementById('error');
-const stats = document.getElementById('stats');
 const results = document.getElementById('results');
 
 // Stats elements
@@ -31,7 +30,6 @@ analyzeBtn.addEventListener('click', analyzeMarket);
 async function analyzeMarket() {
     // Reset UI
     error.classList.add('hidden');
-    stats.classList.add('hidden');
     results.classList.add('hidden');
     loading.classList.remove('hidden');
     analyzeBtn.disabled = true;
@@ -53,7 +51,6 @@ async function analyzeMarket() {
         displayRecommendations(data.categories);
 
         loading.classList.add('hidden');
-        stats.classList.remove('hidden');
         results.classList.remove('hidden');
 
     } catch (err) {
