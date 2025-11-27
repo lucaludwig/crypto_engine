@@ -129,68 +129,64 @@ function createCoinCard(coin, rank, isWeb3 = false) {
         <div class="coin-header">
             <div>
                 <div class="coin-title">#${rank} ${coin.symbol}</div>
-                <div style="color: #666; font-size: 0.9rem;">${coin.name}</div>
+                <div class="stat-name">${coin.name}</div>
             </div>
-            <div style="text-align: right;">
+            <div>
                 <div class="coin-price">${priceFormatted}</div>
-                <span class="coin-score">Score: ${coin.score}</span>
+                <span class="coin-score">Score ${coin.score}</span>
             </div>
         </div>
 
         <div class="coin-stats">
             <div class="stat">
-                <span class="stat-name">Market Cap:</span>
+                <span class="stat-name">Market Cap</span>
                 <span class="stat-val">${formatCurrency(coin.market_cap)}</span>
             </div>
             <div class="stat">
-                <span class="stat-name">Volume 24h:</span>
+                <span class="stat-name">Volume 24h</span>
                 <span class="stat-val">${formatCurrency(coin.volume_24h)}</span>
             </div>
             <div class="stat">
-                <span class="stat-name">24h Change:</span>
+                <span class="stat-name">24h</span>
                 <span class="stat-val ${change24Class}">${coin.change_24h >= 0 ? '+' : ''}${coin.change_24h.toFixed(2)}%</span>
             </div>
             <div class="stat">
-                <span class="stat-name">7d Change:</span>
+                <span class="stat-name">7d</span>
                 <span class="stat-val ${change7Class}">${coin.change_7d >= 0 ? '+' : ''}${coin.change_7d.toFixed(2)}%</span>
             </div>
             <div class="stat">
-                <span class="stat-name">Vol Change:</span>
+                <span class="stat-name">Vol Δ</span>
                 <span class="stat-val ${volChangeClass}">${coin.volume_change_24h >= 0 ? '+' : ''}${coin.volume_change_24h.toFixed(1)}%</span>
             </div>
         </div>
 
         <div class="coin-trading">
             <div class="trading-row">
-                <span class="trading-label">Position Size:</span>
-                <span class="trading-value" style="color: #16a34a; font-size: 1.1rem;">${coin.position_size}%</span>
+                <span class="trading-label">Position</span>
+                <span class="trading-value positive">${coin.position_size}%</span>
             </div>
             <div class="trading-row">
-                <span class="trading-label">Take Profit:</span>
-                <span class="trading-value" style="color: #eab308;">$${coin.take_profit.toFixed(6)}</span>
+                <span class="trading-label">Take Profit</span>
+                <span class="trading-value">${coin.take_profit.toFixed(6)}</span>
             </div>
             <div class="trading-row">
-                <span class="trading-label">Stop Loss:</span>
-                <span class="trading-value" style="color: #ef4444;">$${coin.stop_loss.toFixed(6)}</span>
+                <span class="trading-label">Stop Loss</span>
+                <span class="trading-value negative">${coin.stop_loss.toFixed(6)}</span>
             </div>
             <div class="trading-row">
-                <span class="trading-label">Risk Level:</span>
+                <span class="trading-label">Risk</span>
                 <span class="risk-badge ${riskClass}">${coin.risk_level}</span>
             </div>
             <div class="trading-row">
-                <span class="trading-label">Volume Check:</span>
+                <span class="trading-label">Volume Check</span>
                 ${washBadge}
             </div>
         </div>
 
         ${contractSection}
 
-        <div style="margin-top: 10px; text-align: right;">
-            <a href="https://coinmarketcap.com/currencies/${coin.slug}/"
-               target="_blank"
-               style="color: #667eea; text-decoration: none; font-size: 0.9rem;">
-                View on CoinMarketCap →
-            </a>
+        <div class="coin-link">
+            <a href="https://coinmarketcap.com/currencies/${coin.slug}/" target="_blank" rel="noopener">View on CoinMarketCap →</a>
         </div>
     `;
 
