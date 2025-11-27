@@ -5,8 +5,6 @@ import os
 import sys
 from urllib.parse import parse_qs, urlparse
 
-# Add parent to path to import our modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cmc_client import CoinMarketCapClient
 from enhanced_analyzer import EnhancedCryptoAnalyzer
