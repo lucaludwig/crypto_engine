@@ -10,6 +10,14 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/docs/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/docs/$1"
     }
   ]
 }
