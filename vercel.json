@@ -11,8 +11,5 @@
       "src": "/api/(.*)",
       "dest": "/api/$1"
     }
-  ],
-  "env": {
-    "CMC_API_KEY": "@cmc_api_key"
-  }
+  ]
 }
