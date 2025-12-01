@@ -168,8 +168,13 @@ function createCoinCard(coin, rank) {
 
         ${contractSection}
 
-        <div class="coin-link">
-            <a href="https://coinmarketcap.com/currencies/${coin.slug}/" target="_blank" rel="noopener">View on CoinMarketCap →</a>
+        <div class="coin-actions">
+            <a href="https://www.binance.com/en/trade/${coin.symbol}_USDT?type=spot" target="_blank" rel="noopener" class="btn-binance">
+                Buy on Binance
+            </a>
+            <a href="https://coinmarketcap.com/currencies/${coin.slug}/" target="_blank" rel="noopener" class="link-cmc">
+                View Details →
+            </a>
         </div>
     `;
 
