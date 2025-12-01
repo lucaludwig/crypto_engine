@@ -18,11 +18,7 @@ const lastUpdate = document.getElementById('lastUpdate');
 
 // Category elements
 const spotList = document.getElementById('spotList');
-const futuresList = document.getElementById('futuresList');
-const web3List = document.getElementById('web3List');
 const spotCount = document.getElementById('spotCount');
-const futuresCount = document.getElementById('futuresCount');
-const web3Count = document.getElementById('web3Count');
 
 // Event Listener
 analyzeBtn.addEventListener('click', analyzeMarket);
@@ -48,7 +44,7 @@ async function analyzeMarket() {
 
         // Display results
         displayStats(data);
-        displayRecommendations(data.categories);
+        displayRecommendations(data.spot);
 
         loading.classList.add('hidden');
         results.classList.remove('hidden');
@@ -63,7 +59,7 @@ async function analyzeMarket() {
 }
 
 function displayStats(data) {
-    const total = data.categories.spot.length + data.categories.futures.length + data.categories.web3.length;
+    const total = data.spot.length;
     totalRecs.textContent = total;
     totalAnalyzed.textContent = data.total_analyzed;
     totalFiltered.textContent = data.filtered;
@@ -72,29 +68,16 @@ function displayStats(data) {
     lastUpdate.textContent = now.toLocaleTimeString();
 }
 
-function displayRecommendations(categories) {
+function displayRecommendations(spotCoins) {
     spotList.innerHTML = '';
-    futuresList.innerHTML = '';
-    web3List.innerHTML = '';
+    spotCount.textContent = spotCoins.length;
 
-    spotCount.textContent = categories.spot.length;
-    futuresCount.textContent = categories.futures.length;
-    web3Count.textContent = categories.web3.length;
-
-    categories.spot.forEach((coin, index) => {
+    spotCoins.forEach((coin, index) => {
         spotList.appendChild(createCoinCard(coin, index + 1));
-    });
-
-    categories.futures.forEach((coin, index) => {
-        futuresList.appendChild(createCoinCard(coin, index + 1));
-    });
-
-    categories.web3.forEach((coin, index) => {
-        web3List.appendChild(createCoinCard(coin, index + 1, true));
     });
 }
 
-function createCoinCard(coin, rank, isWeb3 = false) {
+function createCoinCard(coin, rank) {
     const card = document.createElement('div');
     card.className = 'coin-card';
 
@@ -114,13 +97,12 @@ function createCoinCard(coin, rank, isWeb3 = false) {
         ? `<span class="wash-badge">⚠️ Wash: ${coin.wash_trading_confidence}%</span>`
         : `<span class="clean-badge">✓ Clean</span>`;
 
-    const hasContractInfo = isWeb3 && coin.contract_address;
-    const contractSection = `
-        <div class="contract-info ${hasContractInfo ? '' : 'placeholder'}">
-            <div class="contract-label">Contract ${hasContractInfo ? `(${coin.platform})` : ''}</div>
-            <div class="contract-address">${hasContractInfo ? coin.contract_address : '—'}</div>
-        </div>
-    `;
+    const hasContractInfo = coin.contract_address;
+    const contractSection = hasContractInfo ? `
+        <div class="contract-info">
+            <div class="contract-label">Contract ${coin.platform ? `(${coin.platform})` : ''}</div>
+            <div class="contract-address">${coin.contract_address}</div>
+        </div>` : '';
 
     card.innerHTML = `
         <div class="coin-header">

@@ -336,12 +336,12 @@ class EnhancedCryptoAnalyzer:
         # Use fractional Kelly (25-50% of full Kelly) for safety
         # Full Kelly can be too aggressive for crypto volatility
         conservative_kelly = kelly * 0.25  # Ultra conservative
-        moderate_kelly = kelly * 0.5  # Moderate
+        moderate_kelly = kelly * 0.6  # Slightly more aggressive for high-risk focus
 
-        # Cap at reasonable max (never risk more than 10% on single trade)
-        kelly_capped = min(kelly, 0.10)
+        # Cap at reasonable max (but allow larger bite size for high-risk plays)
+        kelly_capped = min(kelly, 0.15)
         conservative_capped = min(conservative_kelly, 0.05)
-        moderate_capped = min(moderate_kelly, 0.075)
+        moderate_capped = min(moderate_kelly, 0.10)
 
         return max(0, moderate_capped)  # Return moderate Kelly, never negative
 
@@ -374,15 +374,15 @@ class EnhancedCryptoAnalyzer:
         wash_penalty = self.df['wash_trading_confidence'] / 100  # 0 to 1
 
         self.df['enhanced_composite_score'] = (
-            self.df['rsi_score'] * 0.15 +           # Professional RSI signals
-            self.df['macd_score'] * 0.15 +          # Trend confirmation
-            self.df['bollinger_score'] * 0.10 +     # Volatility/breakout detection
-            self.df['market_correlation_score'] * 0.15 +  # BTC correlation context
-            self.df['momentum_score'] * 0.15 +      # Price momentum
-            self.df['volume_activity_score'] * 0.15 +  # Volume quality
-            self.df['market_cap_risk_score'] * 0.10 +  # Risk/reward from size
-            self.df['volatility_score'] * 0.05      # Basic volatility
-        ) * (1 - wash_penalty * 0.7)  # Penalize wash trading heavily
+            self.df['volume_activity_score'] * 0.25 +      # Liquidity + spikes
+            self.df['momentum_score'] * 0.22 +             # Fast movers (24h heavy)
+            self.df['market_cap_risk_score'] * 0.18 +      # Favor smaller caps
+            self.df['macd_score'] * 0.08 +                 # Trend confirmation
+            self.df['rsi_score'] * 0.07 +                  # Reversal/overbought context
+            self.df['market_correlation_score'] * 0.05 +   # Market context (lower weight)
+            self.df['bollinger_score'] * 0.05 +            # Breakout posture
+            self.df['volatility_score'] * 0.05             # Baseline volatility
+        ) * (1 - wash_penalty * 0.3)  # Looser wash filter to keep fast movers
 
         # Calculate recommended position sizes (using hypothetical 60% win rate, 1.5:1 ratio)
         # In reality, this should come from backtesting
@@ -427,7 +427,11 @@ class EnhancedCryptoAnalyzer:
             base_score = 30.0
 
         volume_change = row['volume_change_24h']
-        if volume_change > 100:
+        if volume_change > 180:
+            base_score *= 2.8
+        elif volume_change > 120:
+            base_score *= 2.4
+        elif volume_change > 80:
             base_score *= 2.0
         elif volume_change > 50:
             base_score *= 1.6
@@ -436,44 +440,59 @@ class EnhancedCryptoAnalyzer:
         elif volume_change < -40:
             base_score *= 0.6
 
-        return min(base_score, 150.0)
+        # Extra push for small caps that suddenly show real spot liquidity
+        if row['market_cap'] < self.MICRO_CAP and volume_ratio >= self.MEDIUM_VOLUME_RATIO:
+            base_score *= 1.25
+        elif row['market_cap'] < self.SMALL_CAP and volume_change > 50:
+            base_score *= 1.15
+
+        return min(base_score, 180.0)
 
     def _calculate_momentum_score(self, row: pd.Series) -> float:
         """Calculate momentum score - legacy method"""
         momentum = 0.0
 
+        # 1h confirms the move, but keep it lightweight to avoid noise
         if row['percent_change_1h'] > 3 and row['percent_change_24h'] > 5:
             momentum += 15
 
-        if row['percent_change_24h'] > 20:
-            momentum += 50
-        elif row['percent_change_24h'] > 10:
+        # Aggressive focus on strong 24h impulse moves for high-risk plays
+        if row['percent_change_24h'] > 50:
+            momentum += 80
+        elif row['percent_change_24h'] > 35:
+            momentum += 70
+        elif row['percent_change_24h'] > 25:
+            momentum += 55
+        elif row['percent_change_24h'] > 12:
             momentum += 40
-        elif row['percent_change_24h'] > 5:
+        elif row['percent_change_24h'] > 6:
             momentum += 25
-        elif row['percent_change_24h'] < -10:
-            momentum -= 40
+        elif row['percent_change_24h'] < -12:
+            momentum -= 45
 
-        if row['percent_change_7d'] > 20 and row['percent_change_24h'] > 5:
-            momentum += 35
-        elif row['percent_change_7d'] < -20:
-            momentum -= 30
+        # 7d context still matters to avoid pure one-candle scams
+        if row['percent_change_7d'] > 30 and row['percent_change_24h'] > 6:
+            momentum += 30
+        elif row['percent_change_7d'] > 10 and row['percent_change_24h'] > 10:
+            momentum += 20
+        elif row['percent_change_7d'] < -25:
+            momentum -= 25
 
         return max(0, min(momentum, 100))
 
     def get_top_safe_recommendations(self, n: int = 5) -> List[Tuple[str, Dict]]:
-        """Get top recommendations with wash trading filtering
-
-        Returns only coins that pass safety checks
-        """
+        """Get top SPOT recommendations with wash trading filtering"""
         if self.df.empty:
             return []
 
-        # Filter out wash trading suspects
+        # Looser wash trading gate: keep unless highly suspicious
         safe_coins = self.df[
             (self.df['wash_trading_suspicious'] == False) |
-            (self.df['wash_trading_confidence'] < 30)  # Only minor suspicion
+            (self.df['wash_trading_confidence'] < 70)
         ].copy()
+
+        # Spot-only focus: keep coins actually listed on Binance
+        safe_coins = safe_coins[safe_coins['on_binance'] == True]
 
         if safe_coins.empty:
             return []
@@ -519,14 +538,11 @@ class EnhancedCryptoAnalyzer:
         return results
 
     def get_top_by_category(self, category: str, n: int = 10) -> List[Tuple[str, Dict]]:
-        """Get top recommendations by trading category
+        """Get top recommendations by trading category (spot only now)
 
         Args:
-            category: 'spot', 'futures', or 'web3'
+            category: Only 'spot' is supported
             n: Number of recommendations
-
-        Returns:
-            List of (symbol, coin_data) tuples
         """
         if self.df.empty:
             return []
@@ -540,25 +556,12 @@ class EnhancedCryptoAnalyzer:
         if safe_coins.empty:
             return []
 
-        # Filter by category
-        if category == 'spot':
-            # Binance Spot: on Binance and not a token
-            filtered = safe_coins[
-                (safe_coins['on_binance'] == True) &
-                (safe_coins['contract_address'] == '')
-            ].copy()
-        elif category == 'futures':
-            # Binance Futures: has futures flag
-            filtered = safe_coins[
-                safe_coins['has_futures'] == True
-            ].copy()
-        elif category == 'web3':
-            # Web3 Wallet: has contract address
-            filtered = safe_coins[
-                safe_coins['contract_address'] != ''
-            ].copy()
-        else:
+        # Only spot is supported now
+        if category != 'spot':
             return []
+
+        # Binance Spot: any coin listed on Binance (native or token)
+        filtered = safe_coins[safe_coins['on_binance'] == True].copy()
 
         if filtered.empty:
             return []

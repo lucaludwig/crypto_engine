@@ -120,7 +120,7 @@ const API_URL = 'http://localhost:5000/api/analyze';
 
 **Parameters:**
 - `limit` (optional): Number of coins to analyze (default: 1000)
-- `top` (optional): Results per category (default: 10)
+- `top` (optional): Number of spot picks to return (default: 10)
 
 **Example:**
 ```
@@ -133,11 +133,28 @@ GET /api/analyze?limit=1000&top=10
   "timestamp": "2024-01-01T12:00:00Z",
   "total_analyzed": 987,
   "filtered": 143,
-  "categories": {
-    "spot": [...],
-    "futures": [...],
-    "web3": [...]
-  }
+  "spot": [
+    {
+      "symbol": "KAITO",
+      "name": "Kaito AI",
+      "price": 0.1234,
+      "market_cap": 125000000,
+      "volume_24h": 6500000,
+      "change_24h": 18.5,
+      "change_7d": 52.1,
+      "volume_change_24h": 240.3,
+      "score": 92.4,
+      "position_size": 6.5,
+      "take_profit": 0.1481,
+      "stop_loss": 0.1110,
+      "risk_level": "HIGH",
+      "wash_trading_suspicious": false,
+      "wash_trading_confidence": 12.5,
+      "contract_address": "0x1234...abcd",
+      "platform": "Ethereum",
+      "slug": "kaito-ai"
+    }
+  ]
 }
 ```
 

@@ -37,10 +37,8 @@ class handler(BaseHTTPRequestHandler):
             analyzer = EnhancedCryptoAnalyzer(coins_data)
             analyzer.calculate_comprehensive_scores()
 
-            # Get recommendations
+            # Get spot-only recommendations
             spot_coins = analyzer.get_top_by_category('spot', n=top)
-            futures_coins = analyzer.get_top_by_category('futures', n=top)
-            web3_coins = analyzer.get_top_by_category('web3', n=top)
 
             # Format response
             def format_coin(symbol, coin_data):
@@ -69,11 +67,7 @@ class handler(BaseHTTPRequestHandler):
                 'timestamp': coins_data[0].get('last_updated', ''),
                 'total_analyzed': len(analyzer.df),
                 'filtered': len(analyzer.df[analyzer.df['wash_trading_suspicious'] == True]),
-                'categories': {
-                    'spot': [format_coin(s, c) for s, c in spot_coins],
-                    'futures': [format_coin(s, c) for s, c in futures_coins],
-                    'web3': [format_coin(s, c) for s, c in web3_coins]
-                }
+                'spot': [format_coin(s, c) for s, c in spot_coins]
             }
 
             # Send response

@@ -161,9 +161,8 @@ def print_recommendations(top_coins: list):
             platform_info = coin['platform'] if coin['platform'] else "Unknown Chain"
             print(f"    🔗 Token on {platform_info}")
             print(f"    📍 Contract: {coin['contract_address'][:10]}...{coin['contract_address'][-8:]}")
-            print(f"    {Fore.YELLOW}⚠️  Likely DEX only (Uniswap, PancakeSwap, etc.){Style.RESET_ALL}")
-            print(f"    {Fore.YELLOW}⚠️  NOT available on Binance/Coinbase (centralized exchanges){Style.RESET_ALL}")
-            print(f"    {Fore.CYAN}→ Use: Binance Web3 Wallet, MetaMask, or DEX directly{Style.RESET_ALL}")
+            print(f"    {Fore.GREEN}✓ Listed on Binance Spot (token){Style.RESET_ALL}")
+            print(f"    {Fore.CYAN}→ Trade via spot pair search on Binance{Style.RESET_ALL}")
         else:
             print(f"    🏦 Native coin (Layer-1 blockchain)")
             print(f"    {Fore.GREEN}✓ Likely available on major exchanges{Style.RESET_ALL}")
@@ -316,9 +315,8 @@ def main():
         analyzer = CryptoAnalyzer(coins_data)
         analyzer.calculate_scores()
 
-        # Get separate recommendations
+        # Get spot-only recommendations
         top_binance_spot = analyzer.get_top_binance_spot_coins(n=args.top)
-        top_binance_wallet = analyzer.get_top_binance_wallet_coins(n=args.top)
 
         # Binance Spot Section
         print("=" * 80)
@@ -339,27 +337,6 @@ def main():
                 print("")
         else:
             print(f"{Fore.YELLOW}No Binance coins found in top scores{Style.RESET_ALL}\n")
-
-        # Binance Wallet Section
-        print("=" * 80)
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}💼 TOP {args.top} FOR BINANCE WEB3 WALLET{Style.RESET_ALL}")
-        print(f"{Fore.MAGENTA}Use Binance Wallet - NOT on Binance Exchange - Manual Trading!{Style.RESET_ALL}")
-        print("=" * 80 + "\n")
-
-        if top_binance_wallet:
-            for i, (symbol, coin) in enumerate(top_binance_wallet, 1):
-                price = coin['price']
-                tp_agg = price * 1.50
-                sl_trig = price * 0.85
-                sl_lim = price * 0.83
-
-                print(f"{Fore.CYAN}#{i} {symbol}{Style.RESET_ALL} ({coin['name']}) - ${price:.6f} | Score: {coin['composite_score']:.0f}/100")
-                print(f"   {format_percent(coin['change_24h'])} 24h | Vol: {format_percent(coin['volume_change_24h'])}")
-                print(f"   Chain: {coin['platform']} | Contract: {coin['contract_address'][:12]}...")
-                print(f"   {Fore.YELLOW}TP:{Style.RESET_ALL} {tp_agg:.6f}  {Fore.RED}SL Trigger:{Style.RESET_ALL} {sl_trig:.6f}  {Fore.RED}SL Limit:{Style.RESET_ALL} {sl_lim:.6f} {Fore.YELLOW}(Manual!){Style.RESET_ALL}")
-                print("")
-        else:
-            print(f"{Fore.YELLOW}No Binance Wallet tokens found in top scores{Style.RESET_ALL}\n")
 
         # Short footer
         print("=" * 80)

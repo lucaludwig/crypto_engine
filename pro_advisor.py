@@ -155,10 +155,8 @@ def main():
         analyzer.calculate_comprehensive_scores()
         print(f"{Fore.GREEN}✓{Style.RESET_ALL}\n")
 
-        # Get recommendations by category
+        # Get recommendations (spot-only focus)
         top_spot = analyzer.get_top_by_category('spot', n=args.top)
-        top_futures = analyzer.get_top_by_category('futures', n=args.top)
-        top_web3 = analyzer.get_top_by_category('web3', n=args.top)
 
         # Show filtered coins if requested
         if args.show_filtered:
@@ -170,17 +168,11 @@ def main():
         print("=" * 80)
         print_category_recommendations(top_spot, "Binance Spot", verbose=args.verbose)
 
-        print("=" * 80)
-        print_category_recommendations(top_futures, "Binance Futures", verbose=args.verbose)
-
-        print("=" * 80)
-        print_category_recommendations(top_web3, "Binance Web3 Wallet", verbose=args.verbose)
-
         # Footer
         print("=" * 80)
         filtered_count = len(analyzer.df[analyzer.df['wash_trading_suspicious'] == True])
-        total_recommendations = len(top_spot) + len(top_futures) + len(top_web3)
-        print(f"{Fore.CYAN}Total: {total_recommendations} recommendations (Spot: {len(top_spot)}, Futures: {len(top_futures)}, Web3: {len(top_web3)}){Style.RESET_ALL}")
+        total_recommendations = len(top_spot)
+        print(f"{Fore.CYAN}Total: {total_recommendations} spot recommendations{Style.RESET_ALL}")
         print(f"{Fore.CYAN}Analyzed: {len(analyzer.df)} coins | Filtered: {filtered_count} suspicious | {datetime.now().strftime('%H:%M:%S')}{Style.RESET_ALL}")
         print(f"{Fore.RED}⚠️  High risk! Not financial advice!{Style.RESET_ALL}\n")
 
