@@ -146,7 +146,11 @@ function createCoinCard(coin, rank) {
             </div>
             <div class="trading-row">
                 <span class="trading-label">Take Profit</span>
-                <span class="trading-value">${coin.take_profit.toFixed(6)}</span>
+                <span class="trading-value">${coin.take_profit.toFixed(6)} <span class="target-gain">(+${coin.target_pct || 20}%)</span></span>
+            </div>
+            <div class="trading-row">
+                <span class="trading-label">Expected Time</span>
+                <span class="trading-value timeframe">${coin.timeframe || '1-3 days'}</span>
             </div>
             <div class="trading-row">
                 <span class="trading-label">Stop Loss</span>

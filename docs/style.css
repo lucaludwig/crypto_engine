@@ -296,6 +296,18 @@ body {
     color: rgba(255,255,255,0.2);
 }
 
+/* New: Smart targets styling */
+.target-gain {
+    color: var(--positive);
+    font-size: 0.85rem;
+    margin-left: 6px;
+}
+
+.timeframe {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 .hidden { display: none !important; }
 
 @media (max-width: 980px) {
