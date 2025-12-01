@@ -21,6 +21,10 @@ class EnhancedCryptoAnalyzer:
     SMALL_CAP = 250_000_000
     MID_CAP = 2_000_000_000
 
+    # Volume/Market Cap ratio thresholds
+    HIGH_VOLUME_RATIO = 0.15
+    MEDIUM_VOLUME_RATIO = 0.05
+
     # Technical indicator parameters
     RSI_PERIOD = 14
     MACD_FAST = 12
