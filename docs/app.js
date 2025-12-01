@@ -35,12 +35,12 @@ async function analyzeMarket() {
         const top = topSelect.value;
 
         const response = await fetch(`${API_URL}?limit=${limit}&top=${top}`);
+        const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+            const msg = data?.error || `API error: ${response.status}`;
+            throw new Error(msg);
         }
-
-        const data = await response.json();
 
         // Display results
         displayStats(data);

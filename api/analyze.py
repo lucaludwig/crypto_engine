@@ -31,7 +31,11 @@ class handler(BaseHTTPRequestHandler):
             coins_data = client.get_latest_listings(limit=limit)
 
             if not coins_data:
-                self.send_error(500, 'Failed to fetch data from CoinMarketCap')
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': 'Failed to fetch data from CoinMarketCap (check API key/limit)'}).encode())
                 return
 
             analyzer = EnhancedCryptoAnalyzer(coins_data)
@@ -77,6 +81,14 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
 
+        except ValueError as e:
+            # Configuration errors (e.g., missing API key)
+            self.send_response(500)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            error_response = {'error': str(e)}
+            self.wfile.write(json.dumps(error_response).encode())
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
