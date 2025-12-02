@@ -141,28 +141,16 @@ function createCoinCard(coin, rank) {
 
         <div class="coin-trading">
             <div class="trading-row">
-                <span class="trading-label">Position</span>
-                <span class="trading-value positive">${coin.position_size}%</span>
-            </div>
-            <div class="trading-row">
                 <span class="trading-label">Take Profit</span>
                 <span class="trading-value">${coin.take_profit.toFixed(6)} <span class="target-gain">(+${coin.target_pct || 20}%)</span></span>
-            </div>
-            <div class="trading-row">
-                <span class="trading-label">Expected Time</span>
-                <span class="trading-value timeframe">${coin.timeframe || '1-3 days'}</span>
             </div>
             <div class="trading-row">
                 <span class="trading-label">Stop Loss</span>
                 <span class="trading-value negative">${coin.stop_loss.toFixed(6)}</span>
             </div>
             <div class="trading-row">
-                <span class="trading-label">Risk</span>
-                <span class="risk-badge ${riskClass}">${coin.risk_level}</span>
-            </div>
-            <div class="trading-row">
-                <span class="trading-label">Volume Check</span>
-                ${washBadge}
+                <span class="trading-label">Expected Time</span>
+                <span class="trading-value timeframe">${coin.timeframe || '1-3 days'}</span>
             </div>
         </div>
 
