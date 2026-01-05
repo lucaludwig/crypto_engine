@@ -45,8 +45,9 @@ class PositionMonitor:
         # Load existing metadata
         self.position_metadata = self._load_metadata()
 
-        # NOTE: Auto-syncing disabled for stability
-        # Use: python scripts/sync_positions.py to manually sync if needed
+        # CRITICAL: Sync existing positions on startup
+        # This ensures we have metadata for all positions, even after bot restart
+        self._sync_existing_positions()
 
     def _load_metadata(self) -> Dict:
         """Load position metadata from file"""
