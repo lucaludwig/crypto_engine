@@ -1,6 +1,19 @@
 # Environment variables
 .env
 
+# SSH Keys
+oracle_key
+*.key
+*.pem
+*.pub
+
+# Bot generated files
+*.log
+trades_log.json
+learnings.json
+position_metadata.json
+*.zip
+
 # Python
 __pycache__/
 *.py[cod]

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  cadvi-trader:
+    build: .
+    container_name: cadvi-auto-trader
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./trades_log.json:/app/trades_log.json
+      - ./position_metadata.json:/app/position_metadata.json
+      - ./learnings.json:/app/learnings.json
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -33,9 +33,15 @@ class EnhancedCryptoAnalyzer:
     BB_PERIOD = 20
     BB_STD = 2
 
-    def __init__(self, coins_data: List[Dict]):
-        """Initialize enhanced analyzer with coin data"""
+    def __init__(self, coins_data: List[Dict], learning_engine=None):
+        """Initialize enhanced analyzer with coin data
+
+        Args:
+            coins_data: List of coin data from CoinMarketCap
+            learning_engine: Optional TradingLearningEngine for adaptive scoring
+        """
         self.coins_data = coins_data
+        self.learning_engine = learning_engine
         self.df = self._prepare_dataframe()
         self.btc_data = None  # Will store BTC reference data
 
@@ -349,6 +355,47 @@ class EnhancedCryptoAnalyzer:
 
         return max(0, moderate_capped)  # Return moderate Kelly, never negative
 
+    def _get_scoring_weights(self) -> Dict:
+        """Get scoring weights (adaptive if learning engine available, otherwise default)
+
+        Returns:
+            Dictionary with weight values for each score component
+        """
+        # Default weights (hardcoded baseline)
+        default_weights = {
+            'volume_activity': 0.25,
+            'momentum': 0.22,
+            'market_cap': 0.18,
+            'macd': 0.08,
+            'rsi': 0.07,
+            'market_correlation': 0.05,
+            'bollinger': 0.05,
+            'volatility': 0.05,
+            'wash_penalty': 0.3
+        }
+
+        # If no learning engine, use defaults
+        if not self.learning_engine:
+            return default_weights
+
+        # Try to get adaptive weights from learning engine
+        try:
+            adaptive_data = self.learning_engine.get_adaptive_weights(min_confidence=0.3)
+
+            if adaptive_data['mode'] == 'adaptive':
+                # Using learned weights!
+                print(f"  🧠 Using ADAPTIVE weights (confidence: {adaptive_data['confidence']:.1%})")
+                return adaptive_data['weights']
+            else:
+                # Not enough data yet
+                if adaptive_data.get('reason'):
+                    print(f"  📊 Using default weights: {adaptive_data['reason']}")
+                return default_weights
+
+        except Exception as e:
+            print(f"  ⚠️ Error getting adaptive weights, using defaults: {e}")
+            return default_weights
+
     def calculate_comprehensive_scores(self) -> pd.DataFrame:
         """Calculate all professional indicators and scores"""
         if self.df.empty:
@@ -374,19 +421,21 @@ class EnhancedCryptoAnalyzer:
         self.df['momentum_score'] = self.df.apply(self._calculate_momentum_score, axis=1)
 
         # ENHANCED COMPOSITE SCORE with professional indicators
-        # Heavily penalize wash trading suspects
+        # Use ADAPTIVE WEIGHTS from learning engine if available!
+        weights = self._get_scoring_weights()
+
         wash_penalty = self.df['wash_trading_confidence'] / 100  # 0 to 1
 
         self.df['enhanced_composite_score'] = (
-            self.df['volume_activity_score'] * 0.25 +      # Liquidity + spikes
-            self.df['momentum_score'] * 0.22 +             # Fast movers (24h heavy)
-            self.df['market_cap_risk_score'] * 0.18 +      # Favor smaller caps
-            self.df['macd_score'] * 0.08 +                 # Trend confirmation
-            self.df['rsi_score'] * 0.07 +                  # Reversal/overbought context
-            self.df['market_correlation_score'] * 0.05 +   # Market context (lower weight)
-            self.df['bollinger_score'] * 0.05 +            # Breakout posture
-            self.df['volatility_score'] * 0.05             # Baseline volatility
-        ) * (1 - wash_penalty * 0.3)  # Looser wash filter to keep fast movers
+            self.df['volume_activity_score'] * weights['volume_activity'] +
+            self.df['momentum_score'] * weights['momentum'] +
+            self.df['market_cap_risk_score'] * weights['market_cap'] +
+            self.df['macd_score'] * weights['macd'] +
+            self.df['rsi_score'] * weights['rsi'] +
+            self.df['market_correlation_score'] * weights['market_correlation'] +
+            self.df['bollinger_score'] * weights['bollinger'] +
+            self.df['volatility_score'] * weights['volatility']
+        ) * (1 - wash_penalty * weights['wash_penalty'])
 
         # Calculate recommended position sizes (using hypothetical 60% win rate, 1.5:1 ratio)
         # In reality, this should come from backtesting
