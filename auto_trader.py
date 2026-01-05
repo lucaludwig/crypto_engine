@@ -421,8 +421,8 @@ Safety Notes:
     parser.add_argument(
         '--interval',
         type=int,
-        default=30,
-        help='Minutes between cycles in continuous mode (default: 30)'
+        default=5,
+        help='Minutes between cycles in continuous mode (default: 5, optimal for TP/SL monitoring)'
     )
     parser.add_argument(
         '--confirm',
