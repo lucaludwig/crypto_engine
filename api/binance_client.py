@@ -708,6 +708,10 @@ class BinanceTradeClient:
                 buy = matching_buys[-1]  # Most recent buy
                 buy_price = float(buy['price'])
 
+                # Skip if buy_price is 0 (invalid data)
+                if buy_price == 0:
+                    continue
+
                 pnl_pct = ((sell_price - buy_price) / buy_price) * 100
 
                 if pnl_pct > 0:

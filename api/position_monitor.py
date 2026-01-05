@@ -45,6 +45,9 @@ class PositionMonitor:
         # Load existing metadata
         self.position_metadata = self._load_metadata()
 
+        # NOTE: Auto-syncing disabled for stability
+        # Use: python scripts/sync_positions.py to manually sync if needed
+
     def _load_metadata(self) -> Dict:
         """Load position metadata from file"""
         if not self.metadata_file.exists():
@@ -63,6 +66,100 @@ class PositionMonitor:
                 json.dump(self.position_metadata, f, indent=2)
         except Exception as e:
             print(f"Warning: Failed to save position metadata: {e}")
+
+    def _sync_existing_positions(self):
+        """Sync existing positions from Binance and reconstruct metadata
+
+        This is CRITICAL for learning engine to work after bot restart!
+        """
+        try:
+            # Get current positions from Binance
+            self.client._sync_account_state()
+            current_positions = self.client.positions
+
+            if not current_positions:
+                return  # No positions to sync
+
+            print(f"🔄 Syncing {len(current_positions)} existing positions...")
+
+            # Load trades log to find entry prices
+            trades_log = []
+            if self.trades_file.exists():
+                with open(self.trades_file, 'r') as f:
+                    trades_log = json.load(f)
+
+            synced = 0
+            for base_asset, pos in current_positions.items():
+                # Build symbol (try both USDC and USDT)
+                symbol = f"{base_asset}{self.client.quote_currency}"
+
+                # Skip if we already have metadata
+                if symbol in self.position_metadata:
+                    continue
+
+                # Find entry trade in log
+                entry_trade = None
+                for trade in reversed(trades_log):  # Most recent first
+                    if (trade.get('side') == 'BUY' and
+                        base_asset in trade.get('symbol', '')):
+                        entry_trade = trade
+                        break
+
+                if not entry_trade:
+                    # No entry found in log, use current price as fallback
+                    entry_price = float(pos['price'])
+                    entry_time = datetime.now()
+                else:
+                    entry_price = float(entry_trade.get('price', pos['price']))
+                    entry_time_str = entry_trade.get('timestamp', datetime.now().isoformat())
+                    entry_time = datetime.fromisoformat(entry_time_str.replace('Z', ''))
+
+                # Try to find OCO orders for this symbol
+                stop_loss = float(entry_price) * 0.90  # Default -10%
+                take_profit = float(entry_price) * 1.20  # Default +20%
+                oco_order_list_id = None
+
+                try:
+                    if not self.dry_run:
+                        open_orders = self.client.client.get_open_orders(symbol=symbol)
+                        # Look for stop-loss and limit orders
+                        for order in open_orders:
+                            if order['type'] == 'STOP_LOSS_LIMIT':
+                                stop_loss = float(order['stopPrice'])
+                            elif order['type'] == 'LIMIT_MAKER':
+                                take_profit = float(order['price'])
+                except Exception:
+                    pass  # Use defaults
+
+                # Create minimal metadata
+                quantity = float(pos['amount'])
+                self.position_metadata[symbol] = {
+                    'entry_time': entry_time.isoformat(),
+                    'entry_price': entry_price,
+                    'quantity': quantity,
+                    'quantity_remaining': quantity,
+                    'stop_loss': stop_loss,
+                    'take_profit': take_profit,
+                    'oco_order_list_id': oco_order_list_id,
+                    'trailing_enabled': False,
+                    'partial_taken': False,
+                    'dca_count': 0,
+                    'coin_data': {},  # Empty, will be fetched on exit if needed
+                    'adjustments': [],
+                    'reconstructed': True  # Flag to indicate this was reconstructed
+                }
+
+                synced += 1
+                print(f"  ✓ Synced {symbol}: Entry ${entry_price:.6f}, TP ${take_profit:.6f}, SL ${stop_loss:.6f}")
+
+            if synced > 0:
+                self._save_metadata()
+                print(f"✅ Synced {synced} positions successfully!\n")
+            else:
+                print(f"✓ All positions already have metadata\n")
+
+        except Exception as e:
+            print(f"Warning: Failed to sync existing positions: {e}\n")
 
     def store_position(self, symbol: str, entry_price: float, quantity: float,
                       stop_loss: float, take_profit: float, oco_order_list_id: int,
@@ -717,12 +814,22 @@ class PositionMonitor:
             # Feed to learning engine
             if self.learning_engine:
                 coin_data = metadata.get('coin_data', {})
-                self.learning_engine.analyze_trade_outcome(
-                    symbol=symbol,
-                    buy_price=entry_price,
-                    sell_price=exit_price,
-                    coin_data=coin_data
-                )
+
+                # CRITICAL FALLBACK: If coin_data is empty, fetch it live!
+                if not coin_data or len(coin_data) == 0:
+                    print(f"   ⚠️  No coin_data found, fetching live from CoinMarketCap...")
+                    coin_data = self._fetch_coin_data_fallback(symbol)
+
+                if coin_data and len(coin_data) > 0:
+                    self.learning_engine.analyze_trade_outcome(
+                        symbol=symbol,
+                        buy_price=entry_price,
+                        sell_price=exit_price,
+                        coin_data=coin_data
+                    )
+                    print(f"   🧠 Learning engine updated with trade data")
+                else:
+                    print(f"   ⚠️  Could not fetch coin_data, skipping learning for this trade")
 
         except Exception as e:
             print(f"Warning: Failed to log exit for {symbol}: {e}")
@@ -740,3 +847,42 @@ class PositionMonitor:
             reason=f"OCO {exit_info['exit_type']} triggered",
             metadata=exit_info['metadata']
         )
+
+    def _fetch_coin_data_fallback(self, symbol: str) -> Dict:
+        """Fetch coin data from CoinMarketCap as fallback
+
+        This is used when position metadata doesn't have coin_data
+        (e.g., after bot restart or for old positions)
+
+        Args:
+            symbol: Trading pair (e.g., 'NEIROUSDC')
+
+        Returns:
+            Coin data dict or empty dict if failed
+        """
+        try:
+            # Extract base asset (remove USDC/USDT/BUSD suffix)
+            base_asset = symbol.replace('USDC', '').replace('USDT', '').replace('BUSD', '')
+
+            # Import here to avoid circular dependency
+            from api.cmc_client import CoinMarketCapClient
+
+            # Fetch data from CMC
+            cmc_client = CoinMarketCapClient()
+            coins_data = cmc_client.get_latest_listings(limit=500)
+
+            if not coins_data:
+                return {}
+
+            # Find our coin
+            for coin in coins_data:
+                if coin['symbol'] == base_asset:
+                    print(f"   ✓ Found {base_asset} on CoinMarketCap")
+                    return coin
+
+            print(f"   ⚠️  {base_asset} not found in top 500 CMC coins")
+            return {}
+
+        except Exception as e:
+            print(f"   ⚠️  Failed to fetch coin data: {e}")
+            return {}
