@@ -307,6 +307,44 @@ Restart when ready! 👋
 """
         return self.send_message(message)
 
+    def notify_hourly_status(self, balance: float, total_pnl: float, total_pnl_pct: float,
+                             positions: list, bot_running: bool = False):
+        """Send hourly portfolio status update"""
+        from datetime import datetime
+
+        now = datetime.now().strftime("%H:%M")
+        emoji = "📈" if total_pnl >= 0 else "📉"
+        status_emoji = "🟢" if bot_running else "🔴"
+
+        # Build positions summary
+        pos_lines = []
+        for p in positions[:8]:  # Max 8 positions
+            pnl_pct = p.get('pnl_pct', 0)
+            symbol = p.get('symbol', '???').replace('USDT', '')
+            pos_emoji = "🟢" if pnl_pct > 0 else "🔴" if pnl_pct < 0 else "⚪"
+
+            # Check distance to TP
+            tp_away = p.get('tp_away', 0)
+            tp_info = f" (TP: {tp_away:.0f}%)" if tp_away and tp_away < 10 else ""
+
+            pos_lines.append(f"  {pos_emoji} `{symbol:6}` {pnl_pct:+5.1f}%{tp_info}")
+
+        pos_text = "\n".join(pos_lines) if pos_lines else "  Keine offenen Positionen"
+
+        message = f"""
+⏰ *STÜNDLICHES UPDATE* ({now})
+
+💰 *Portfolio:*
+  • Balance: `${balance:.2f}`
+  • Gesamt P&L: `{total_pnl:+.2f}` USDT ({total_pnl_pct:+.1f}%)
+
+{emoji} *Positionen:*
+{pos_text}
+
+{status_emoji} Bot Status: {'Läuft' if bot_running else 'Gestoppt'}
+"""
+        return self.send_message(message, silent=True)
+
 
 # Global instance
 notifier = TelegramNotifier()
